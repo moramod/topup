@@ -6,16 +6,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static('.'));
 
-const API_KEY = process.env.TELERIVET_API_KEY;
-const PROJECT_ID = process.env.TELERIVET_PROJECT_ID;
+// Telerivet Credentials (Code ထဲ တိုက်ရိုက်ထည့်ထားသည်)
+const API_KEY = "NCSLv_GJbeggLadOHU1UjuHRKbP3bKzUjMy1"; 
+const PROJECT_ID = "PJ19c103b08f4daf38"; 
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Gateway Status Check
+// Gateway Status Check API
 app.get('/api/status', async (req, res) => {
-    if (!API_KEY || !PROJECT_ID) return res.json({ online: false });
     try {
         const response = await axios.get(`https://api.telerivet.com/v1/projects/${PROJECT_ID}/routes`, {
             auth: { username: API_KEY, password: '' }
@@ -27,7 +27,7 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// USSD Send API
+// USSD Action API
 app.post('/api/recharge', async (req, res) => {
     const { phone, ussd } = req.body;
     try {
@@ -38,11 +38,11 @@ app.post('/api/recharge', async (req, res) => {
         }, {
             auth: { username: API_KEY, password: '' }
         });
-        res.json({ success: true, message: "Request sent!" });
+        res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Gateway Error" });
+        res.status(500).json({ success: false });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server Live'));
+app.listen(PORT, () => console.log('Server is running...'));
