@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Gateway Status စစ်သည့် API
+// Gateway Status Check
 app.get('/api/status', async (req, res) => {
     if (!API_KEY || !PROJECT_ID) return res.json({ online: false });
     try {
@@ -27,7 +27,7 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// USSD ပို့သည့် API
+// USSD Send API
 app.post('/api/recharge', async (req, res) => {
     const { phone, ussd } = req.body;
     try {
@@ -45,4 +45,4 @@ app.post('/api/recharge', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Server is running...'));
+app.listen(PORT, () => console.log('Server Live'));
