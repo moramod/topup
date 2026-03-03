@@ -4,44 +4,69 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('.'));
 
-// index.html ကို Root မှာ တန်းပွင့်အောင် လုပ်ပေးသည့်အပိုင်း
+// Render Environment Variables မှ Data များကို ယူခြင်း
+const API_KEY = process.env.TELERIVET_API_KEY;
+const PROJECT_ID = process.env.TELERIVET_PROJECT_ID;
+
+// Home Page ကို ပို့ပေးခြင်း
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// ကျန်သည့် static ဖိုင်များ (CSS, JS) ရှိလျှင် ရှာတွေ့ရန်
-app.use(express.static('.'));
-
-// Environment Variables (Render Setting ထဲတွင် ထည့်ထားရမည့် ကုဒ်များ)
-const GATEWAY_API = process.env.API_TOKEN || "88e071f173f00168c482c27439214c6e";
-const GATEWAY_ID = process.env.DEVICE_ID || "12791";
-
-// Gateway Status စစ်ဆေးရန် (ဖုန်း App အွန်လိုင်း ရှိ/မရှိ)
+// ၁။ Telerivet Gateway Status ကို စစ်ဆေးသည့် API
+// Website ရှိ Telerivet ✅ Status ပြရန်အတွက် ဖြစ်သည်
 app.get('/api/status', async (req, res) => {
+    if (!API_KEY || !PROJECT_ID) return res.json({ online: false });
+
     try {
-        const response = await axios.get(`https://smsgateway24.com/getapi/v1/device/status?token=${GATEWAY_API}&device_id=${GATEWAY_ID}`);
-        res.json({ success: response.data.success, status: response.data.device_status });
+        const response = await axios.get(
+            `https://api.telerivet.com/v1/projects/${PROJECT_ID}/routes`,
+            {
+                auth: { username: API_KEY, password: '' }
+            }
+        );
+        // ဖုန်းထဲက Telerivet App သည် Active (Online) ဖြစ်နေသလား စစ်သည်
+        const isOnline = response.data.data.some(route => route.status === 'active');
+        res.json({ online: isOnline });
     } catch (error) {
-        res.status(500).json({ success: false });
+        console.error('Status Check Error:', error.message);
+        res.json({ online: false });
     }
 });
 
-// USSD (ဘေဖြည့်/ငွေစစ်) ပို့ရန်
-app.post('/api/ussd', async (req, res) => {
-    const { code, simSlot } = req.body;
+// ၂။ ဘေဖြည့်ခြင်း နှင့် USSD ပို့ခြင်း API
+app.post('/api/recharge', async (req, res) => {
+    const { phone, ussd } = req.body;
+
+    if (!API_KEY || !PROJECT_ID) {
+        return res.status(500).json({ success: false, message: "Server Configuration Missing!" });
+    }
+
     try {
-        const response = await axios.post('https://smsgateway24.com/getapi/v1/ussd', {
-            token: GATEWAY_API,
-            device_id: GATEWAY_ID,
-            send_to: code,
-            sim: parseInt(simSlot)
-        });
-        res.json({ success: true, data: response.data });
+        // Telerivet API သို့ USSD ပို့ရန် လှမ်းခေါ်ခြင်း
+        await axios.post(
+            `https://api.telerivet.com/v1/projects/${PROJECT_ID}/messages/send`,
+            {
+                content: ussd, // Frontend မှ ပို့လိုက်သော *123*...# သို့မဟုတ် *124#
+                to_number: phone,
+                message_type: 'ussd'
+            },
+            {
+                auth: { username: API_KEY, password: '' }
+            }
+        );
+
+        res.json({ success: true, message: "Request sent successfully to gateway." });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Telerivet API Error:', error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, message: "Gateway ချိတ်ဆက်မှု အဆင်မပြေပါ။" });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Project ID: ${PROJECT_ID ? 'Loaded' : 'Missing'}`);
+});
