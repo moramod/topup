@@ -5,14 +5,19 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 
-// index.html က အပြင်မှာရှိနေလို့ အစက် (.) သုံးရပါမယ်
+// index.html ကို Root မှာ တန်းပွင့်အောင် လုပ်ပေးသည့်အပိုင်း
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ကျန်သည့် static ဖိုင်များ (CSS, JS) ရှိလျှင် ရှာတွေ့ရန်
 app.use(express.static('.'));
 
-// သင့်ရဲ့ အချက်အလက်များ (Render Environment Variables မှလည်း ယူနိုင်သည်)
+// Environment Variables (Render Setting ထဲတွင် ထည့်ထားရမည့် ကုဒ်များ)
 const GATEWAY_API = process.env.API_TOKEN || "88e071f173f00168c482c27439214c6e";
 const GATEWAY_ID = process.env.DEVICE_ID || "12791";
 
-// Gateway Status စစ်ဆေးရန် (ဖုန်း App အွန်လိုင်းရှိမရှိ)
+// Gateway Status စစ်ဆေးရန် (ဖုန်း App အွန်လိုင်း ရှိ/မရှိ)
 app.get('/api/status', async (req, res) => {
     try {
         const response = await axios.get(`https://smsgateway24.com/getapi/v1/device/status?token=${GATEWAY_API}&device_id=${GATEWAY_ID}`);
