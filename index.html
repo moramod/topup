@@ -3,147 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-Topup Pro Status</title>
+    <title>Topup Gateway Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
     <style>
-        :root { --mytel: #f39c12; --atom: #00b894; --success: #2ecc71; --danger: #e74c3c; }
-        body { font-family: sans-serif; background: #f0f4f8; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; }
-        
-        /* Status Bar Style */
-        .status-container { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
-        .status-box { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: bold; text-align: center; background: #eee; }
-        .status-on { background: #e8f8f0; color: var(--success); border: 1px solid var(--success); }
-        .status-off { background: #fdeaea; color: var(--danger); border: 1px solid var(--danger); }
-
-        .op-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .op-btn { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px; cursor: pointer; text-align: center; font-weight: bold; }
-        .active-mytel { border-color: var(--mytel); color: var(--mytel); }
-        .active-atom { border-color: var(--atom); color: var(--atom); }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-fill { width: 100%; padding: 14px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-check { width: 100%; padding: 10px; border: 1px solid var(--mytel); color: var(--mytel); background: none; border-radius: 8px; margin-top: 8px; cursor: pointer; }
-        .history { width: 100%; max-width: 380px; margin-top: 20px; }
-        .h-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 13px; display: flex; justify-content: space-between; border-left: 4px solid #ddd; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 380px; }
+        .status-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .badge { flex: 1; padding: 8px; border-radius: 8px; font-size: 11px; text-align: center; font-weight: bold; background: #eee; }
+        .online { background: #e8f8f0; color: #2ecc71; border: 1px solid #2ecc71; }
+        .offline { background: #fdeaea; color: #e74c3c; border: 1px solid #e74c3c; }
+        .op-btn { width: 48%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .selected { border-color: #007bff; color: #007bff; background: #e7f1ff; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="status-container">
-        <div id="cloud-status" class="status-box">Cloud: Checking...</div>
-        <div id="tele-status" class="status-box">Telerivet: Checking...</div>
+    <div class="status-bar">
+        <div id="cloud-status" class="badge">Cloud: Checking...</div>
+        <div id="tele-status" class="badge">Telerivet: Checking...</div>
     </div>
 
-    <h3 style="text-align:center; margin-top:0;">Mobile Services</h3>
-    <div class="op-group">
-        <div id="m-btn" class="op-btn" onclick="setOp('Mytel')">Mytel</div>
-        <div id="a-btn" class="op-btn" onclick="setOp('ATOM')">ATOM</div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <button id="m-btn" class="op-btn" onclick="setOp('Mytel')">Mytel</button>
+        <button id="a-btn" class="op-btn" onclick="setOp('ATOM')">ATOM</button>
     </div>
 
     <input type="tel" id="phone" placeholder="ဖုန်းနံပါတ် (09...)">
-    <input type="text" id="pin" placeholder="PIN နံပါတ် (ငွေဖြည့်ရန်)">
+    <input type="text" id="pin" placeholder="PIN နံပါတ်">
     
-    <button id="mainBtn" class="btn-fill" style="background:#ccc" onclick="doAction('topup')" disabled>Operator ရွေးပါ</button>
-    <button id="checkBtn" class="btn-check" style="display:none;" onclick="doAction('check')">Mytel ငွေစစ်မည် (*124#)</button>
-</div>
-
-<div class="history">
-    <h4 style="margin-bottom:10px;">Recent Activity</h4>
-    <div id="logs">မှတ်တမ်းမရှိသေးပါ။</div>
+    <button id="mainBtn" class="btn-main" onclick="sendAction('topup')" disabled>Operator ရွေးပါ</button>
+    <button id="checkBtn" style="width:100%; margin-top:10px; display:none;" onclick="sendAction('check')">Mytel ငွေစစ် (*124#)</button>
 </div>
 
 <script>
     let op = "";
     // Firebase Config
     const conf = {
-        apiKey: "AIzaSyDahNKp2jaiJSHzNkKw_VtcCR55y9-IHTQ",
-        databaseURL: "https://lovely-7c35f-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "lovely-7c35f"
+        apiKey: "AIzaSyDahNKp2jaiJSHzNkKw_VtcCR55y9-IHTQ", //
+        databaseURL: "https://lovely-7c35f-default-rtdb.asia-southeast1.firebasedatabase.app", //
+        projectId: "lovely-7c35f" //
     };
 
-    // Firebase Init & Cloud Status Check
     try {
         firebase.initializeApp(conf);
-        const db = firebase.database();
         document.getElementById('cloud-status').innerText = "Cloud: ✅ Online";
-        document.getElementById('cloud-status').className = "status-box status-on";
-        
-        // History Loading
-        db.ref('logs').limitToLast(5).on('value', s => {
-            const logs = document.getElementById('logs');
-            logs.innerHTML = "";
-            const val = s.val();
-            if(val) {
-                Object.values(val).reverse().forEach(v => {
-                    logs.innerHTML += `<div class="h-item"><span>${v.phone}</span><b>${v.action}</b></div>`;
-                });
-            }
-        });
-    } catch (e) {
-        document.getElementById('cloud-status').innerText = "Cloud: ❌ Offline";
-        document.getElementById('cloud-status').className = "status-box status-off";
+        document.getElementById('cloud-status').classList.add('online');
+    } catch(e) { document.getElementById('cloud-status').innerText = "Cloud: ❌ Error"; }
+
+    async function checkTele() {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const el = document.getElementById('tele-status');
+        if(data.online) { el.innerText = "Telerivet: ✅ Online"; el.className = "badge online"; }
+        else { el.innerText = "Telerivet: ❌ Offline"; el.className = "badge offline"; }
     }
 
-    // Telerivet Gateway Status Check
-    async function checkGateway() {
-        const teleStatus = document.getElementById('tele-status');
-        try {
-            const res = await fetch('/api/status');
-            const data = await res.json();
-            if(data.online) {
-                teleStatus.innerText = "Telerivet: ✅ Online";
-                teleStatus.className = "status-box status-on";
-            } else {
-                teleStatus.innerText = "Telerivet: ❌ Offline";
-                teleStatus.className = "status-box status-off";
-            }
-        } catch {
-            teleStatus.innerText = "Telerivet: ❌ Error";
-            teleStatus.className = "status-box status-off";
-        }
-    }
-
-    function setOp(selected) {
-        op = selected;
-        document.getElementById('m-btn').className = (op==='Mytel')?'op-btn active-mytel':'op-btn';
-        document.getElementById('a-btn').className = (op==='ATOM')?'op-btn active-atom':'op-btn';
-        const main = document.getElementById('mainBtn');
-        main.disabled = false;
-        main.innerText = op + " ငွေဖြည့်မည်";
-        main.style.background = (op==='Mytel')?'#f39c12':'#00b894';
+    function setOp(s) {
+        op = s;
+        document.getElementById('m-btn').className = (op==='Mytel')?'op-btn selected':'op-btn';
+        document.getElementById('a-btn').className = (op==='ATOM')?'op-btn selected':'op-btn';
+        document.getElementById('mainBtn').disabled = false;
+        document.getElementById('mainBtn').innerText = op + " ငွေဖြည့်မည်";
         document.getElementById('checkBtn').style.display = (op==='Mytel')?'block':'none';
     }
 
-    async function doAction(type) {
+    async function sendAction(type) {
         const phone = document.getElementById('phone').value;
         const pin = document.getElementById('pin').value;
         if(!phone) return alert("ဖုန်းနံပါတ်ထည့်ပါ");
-
-        let ussd = (type === 'topup') ? ((op === 'Mytel') ? `*124*${pin}#` : `*123*${pin}#`) : "*124#";
-
+        let ussd = (type==='topup')?((op==='Mytel')?`*124*${pin}#`:`*123*${pin}#`):"*124#";
+        
         const res = await fetch('/api/recharge', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ phone, ussd })
         });
-
-        const data = await res.json();
-        if(data.success) {
-            firebase.database().ref('logs').push({
-                phone, 
-                action: (type==='topup' ? op+' Topup' : 'Mytel Check'),
-                time: new Date().toLocaleTimeString()
-            });
-            alert(data.message);
+        const d = await res.json();
+        if(d.success) {
+            firebase.database().ref('logs').push({ phone, action: type, time: new Date().toLocaleString() });
+            alert("အောင်မြင်ပါသည်");
         }
     }
-
-    checkGateway();
-    setInterval(checkGateway, 20000); // ၂၀ စက္ကန့်တစ်ခါ Gateway စစ်မည်
+    checkTele(); setInterval(checkTele, 30000);
 </script>
-
 </body>
 </html>
