@@ -4,13 +4,15 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
 
-// သင့်ရဲ့ အချက်အလက်များ
-const GATEWAY_API = "88e071f173f00168c482c27439214c6e";
-const GATEWAY_ID = "12791";
+// index.html က အပြင်မှာရှိနေလို့ အစက် (.) သုံးရပါမယ်
+app.use(express.static('.'));
 
-// ဖုန်း App အွန်လိုင်း ရှိ/မရှိ စစ်ဆေးရန်
+// သင့်ရဲ့ အချက်အလက်များ (Render Environment Variables မှလည်း ယူနိုင်သည်)
+const GATEWAY_API = process.env.API_TOKEN || "88e071f173f00168c482c27439214c6e";
+const GATEWAY_ID = process.env.DEVICE_ID || "12791";
+
+// Gateway Status စစ်ဆေးရန် (ဖုန်း App အွန်လိုင်းရှိမရှိ)
 app.get('/api/status', async (req, res) => {
     try {
         const response = await axios.get(`https://smsgateway24.com/getapi/v1/device/status?token=${GATEWAY_API}&device_id=${GATEWAY_ID}`);
@@ -20,7 +22,7 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// USSD (Topup/Balance) ပို့ရန်
+// USSD (ဘေဖြည့်/ငွေစစ်) ပို့ရန်
 app.post('/api/ussd', async (req, res) => {
     const { code, simSlot } = req.body;
     try {
